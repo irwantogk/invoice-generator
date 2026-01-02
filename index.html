@@ -123,6 +123,12 @@
         display: none !important;
       }
 
+      /* Sembunyikan kolom tombol hapus di tabel (Header dan Data) */
+      #itemTable th:last-child,
+      #itemTable td:last-child {
+        display: none !important;
+      }
+
       .invoice-box {
         border: none;
         padding: 0;
@@ -131,12 +137,6 @@
       input {
         background: transparent !important;
         border: none !important;
-      }
-
-      /* Sembunyikan kolom tombol hapus di tabel */
-      #itemTable th:last-child,
-      #itemTable td:last-child {
-        display: none !important;
       }
     }
   </style>
@@ -271,13 +271,10 @@
       const inputNama = document.getElementById('namaPenerima');
 
       // 1. FORMAT TANGGAL KE DD-MM-YYYY
-      const valTgl = inputTgl.value; // Hasilnya YYYY-MM-DD
+      const valTgl = inputTgl.value;
       if (valTgl) {
         const d = valTgl.split('-');
-        const tglIndo = `${d[2]}-${d[1]}-${d[0]}`;
-
-        // Tampilkan teks indo, sembunyikan input kalender
-        tglDisplay.innerText = tglIndo;
+        tglDisplay.innerText = `${d[2]}-${d[1]}-${d[0]}`;
         tglDisplay.style.display = 'inline';
         inputTgl.style.display = 'none';
       }
@@ -286,15 +283,21 @@
       let namaUser = inputNama.value.trim() || 'customer';
       let formatNama = namaUser.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
+      // 3. KONFIGURASI PDF (DENGAN INSTRUKSI IGNORE)
       const opt = {
         margin: 0.5,
         filename: `invoice-${formatNama}.pdf`,
         image: {type: 'jpeg', quality: 0.98},
-        html2canvas: {scale: 2, useCORS: true},
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          // PENTING: Mengabaikan elemen class no-print saat generate gambar
+          ignoreElements: (el) => el.classList.contains('no-print')
+        },
         jsPDF: {unit: 'in', format: 'letter', orientation: 'portrait'}
       };
 
-      // 3. GENERATE PDF
+      // 4. GENERATE PDF
       html2pdf().set(opt).from(element).save().then(() => {
         // Kembalikan tampilan ke semula setelah PDF didownload
         tglDisplay.style.display = 'none';
