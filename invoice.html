@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice Dinamis - Wallpaper Dinding</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      color: #333;
+    }
+
+    .invoice-box {
+      max-width: 850px;
+      margin: auto;
+      padding: 30px;
+      border: 1px solid #ddd;
+      background: #fff;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .logo-area {
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    .info-area p {
+      margin: 5px 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .info-area span {
+      width: 80px;
+      display: inline-block;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    table,
+    th,
+    td {
+      border: 1px solid #000;
+    }
+
+    th {
+      background-color: #f9f9f9;
+      padding: 10px;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+
+    td {
+      padding: 8px;
+    }
+
+    input {
+      border: none;
+      width: 100%;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input:focus {
+      background-color: #fff9c4;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    .font-bold {
+      font-weight: bold;
+    }
+
+    .btn-group {
+      max-width: 850px;
+      margin: 20px auto;
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+    }
+
+    .btn-add {
+      background: #4caf50;
+      color: white;
+    }
+
+    .btn-pdf {
+      background: #2196f3;
+      color: white;
+    }
+
+    .btn-del {
+      background: #f44336;
+      color: white;
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+
+    /* CSS KHUSUS PRINT */
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+
+      .invoice-box {
+        border: none;
+        padding: 0;
+      }
+
+      input {
+        background: transparent !important;
+        border: none !important;
+      }
+
+      /* Sembunyikan kolom tombol hapus di tabel */
+      #itemTable th:last-child,
+      #itemTable td:last-child {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="invoice-box" id="invoice">
+    <div class="header">
+      <div class="logo-area">
+        <div style="font-size: 40px;">🏠</div>
+        <div>WALLPAPER_DINDING.ID</div>
+      </div>
+      <div class="info-area">
+        <p><span>Tanggal</span>: <b id="tglDisplay" style="display:none;"></b><input type="date" id="tglInvoice"
+            style="width: 150px;"></p>
+        <p><span>Nama</span>: <input type="text" id="namaPenerima" placeholder="Bpk Yusuf Priyanto"
+            style="width: 200px; border-bottom: 1px solid #eee;"></p>
+        <p><span>Alamat</span>: <input type="text" placeholder="Jl. Villa Japos Blok G1 No.15"
+            style="width: 200px; border-bottom: 1px solid #eee;"></p>
+      </div>
+    </div>
+
+    <table id="itemTable">
+      <thead>
+        <tr>
+          <th width="10%">JUMLAH</th>
+          <th width="50%">NAMA BARANG</th>
+          <th width="20%">HARGA</th>
+          <th width="20%">TOTAL</th>
+          <th class="no-print" width="5%"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input type="number" class="qty" value="15" oninput="calculate()"></td>
+          <td><input type="text" value="Wall paper star wall (97202)"></td>
+          <td><input type="number" class="price" value="250000" oninput="calculate()"></td>
+          <td class="text-right row-total">3.750.000</td>
+          <td class="no-print"><button class="btn-del" onclick="removeRow(this)">x</button></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3" class="text-right font-bold">JUMLAH</td>
+          <td class="text-right font-bold" id="grandTotal">3.750.000</td>
+          <td class="no-print"></td>
+        </tr>
+        <tr>
+          <td colspan="3" class="text-right font-bold">DP (Uang Muka)</td>
+          <td class="text-right"><input type="number" id="dpAmount" value="2000000" oninput="calculate()"
+              class="text-right font-bold"></td>
+          <td class="no-print"></td>
+        </tr>
+        <tr>
+          <td colspan="3" class="text-right font-bold" style="background: #f2f2f2;">SISA PEMBAYARAN</td>
+          <td class="text-right font-bold" id="balance" style="background: #f2f2f2;">1.750.000</td>
+          <td class="no-print"></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div style="margin-top: 30px; display: flex; justify-content: space-between;">
+      <div>
+        <div style="font-size: 16px;">
+          <strong>PEMBAYARAN:</strong><br>
+          <strong>BCA A/N : Aris Wibowo</strong><br>
+          <strong>NO ACC : 3450.7764.23</strong>
+        </div>
+        <p
+          style="width: 280px; border: 2px solid #000; padding: 5px; text-align: center; font-weight: bold; font-size: 12px;">
+          Barang yang diterima tidak dapat ditukar/dikembalikan kecuali ada perjanjian</p>
+      </div>
+      <div style="text-align: center; min-width: 150px;">
+        Penerima<br><br><br><br>
+        ( ............................. )
+      </div>
+      <div style="text-align: center; min-width: 150px;">
+        Penjual<br><br><br><br>
+        ( ............................. )
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-group no-print">
+    <button class="btn-add" onclick="addRow()">+ Tambah Item</button>
+    <button class="btn-pdf" onclick="downloadPDF()">Download PDF</button>
+  </div>
+
+  <script>
+    window.onload = function () {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('tglInvoice').value = today;
+    };
+
+    function addRow() {
+      const tbody = document.querySelector("#itemTable tbody");
+      const row = tbody.insertRow();
+      row.innerHTML = `
+            <td><input type="number" class="qty" value="0" oninput="calculate()"></td>
+            <td><input type="text" placeholder="Nama Barang..."></td>
+            <td><input type="number" class="price" value="0" oninput="calculate()"></td>
+            <td class="text-right row-total">0</td>
+            <td class="no-print"><button class="btn-del" onclick="removeRow(this)">x</button></td>
+        `;
+    }
+
+    function removeRow(btn) {
+      btn.parentElement.parentElement.remove();
+      calculate();
+    }
+
+    function calculate() {
+      let rows = document.querySelectorAll("#itemTable tbody tr");
+      let grandTotal = 0;
+      rows.forEach(row => {
+        let qty = parseFloat(row.querySelector(".qty").value) || 0;
+        let price = parseFloat(row.querySelector(".price").value) || 0;
+        let total = qty * price;
+        row.querySelector(".row-total").innerText = total.toLocaleString('id-ID');
+        grandTotal += total;
+      });
+      const dp = parseFloat(document.getElementById("dpAmount").value) || 0;
+      document.getElementById("grandTotal").innerText = grandTotal.toLocaleString('id-ID');
+      document.getElementById("balance").innerText = (grandTotal - dp).toLocaleString('id-ID');
+    }
+
+    function downloadPDF() {
+      const element = document.getElementById('invoice');
+      const inputTgl = document.getElementById('tglInvoice');
+      const tglDisplay = document.getElementById('tglDisplay');
+      const inputNama = document.getElementById('namaPenerima');
+
+      // 1. FORMAT TANGGAL KE DD-MM-YYYY
+      const valTgl = inputTgl.value; // Hasilnya YYYY-MM-DD
+      if (valTgl) {
+        const d = valTgl.split('-');
+        const tglIndo = `${d[2]}-${d[1]}-${d[0]}`;
+
+        // Tampilkan teks indo, sembunyikan input kalender
+        tglDisplay.innerText = tglIndo;
+        tglDisplay.style.display = 'inline';
+        inputTgl.style.display = 'none';
+      }
+
+      // 2. NAMA FILE
+      let namaUser = inputNama.value.trim() || 'customer';
+      let formatNama = namaUser.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+      const opt = {
+        margin: 0.5,
+        filename: `invoice-${formatNama}.pdf`,
+        image: {type: 'jpeg', quality: 0.98},
+        html2canvas: {scale: 2, useCORS: true},
+        jsPDF: {unit: 'in', format: 'letter', orientation: 'portrait'}
+      };
+
+      // 3. GENERATE PDF
+      html2pdf().set(opt).from(element).save().then(() => {
+        // Kembalikan tampilan ke semula setelah PDF didownload
+        tglDisplay.style.display = 'none';
+        inputTgl.style.display = 'inline';
+      });
+    }
+  </script>
+</body>
+
+</html>
